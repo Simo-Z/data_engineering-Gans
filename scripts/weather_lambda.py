@@ -2,51 +2,78 @@ import requests
 import pandas as pd
 import datetime as dt
 import sqlalchemy
+import os
+from dotenv import load_dotenv, find_dotenv
+
+# load env data from .env file.
+load_dotenv(find_dotenv(filename='.env'))
 
 # GLOBAL Variables
-API_KEY = "c21a13f270f9dfc33b7894b574d754ad"
-schema="gans"
-host="gans-aws.cs3d3b90junp.us-east-1.rds.amazonaws.com"
-user="admin"
-password = "pEjhiw-wygsy4-quhsos"
-port=3306
+OWM_API_KEY = os.environ["OWM_API_KEY"] 
+schema = os.environ["DB_SCHEMA"] 
+host = os.environ["DB_HOST"] 
+user = os.environ["DB_USER"] 
+password = os.environ["DB_PASSWORD"] 
+port=os.environ["DB_POrt"] 
 con = f'mysql+pymysql://{user}:{password}@{host}:{port}/{schema}'
+
+# -------------------  LAMBDA HANDLER  ------------------------------------------------------------------------------------
+
 
 def lambda_handler(event, context):
     # get List of Cities from all cities on DB
     cities = get_cities(con)
     # fetch City weather fir every city with a population > 100.000
-    init_city_weather_df = get_city_weather(cities)
-    city_weather_df = clean_city_weather(init_city_weather_df)
-    city_weather_df.assign(created_at = event["time"]).to_sql('city_weather', con=con, if_exists="replace", index=False)
-    send_to_db(df=city_weather_df, table_name = "city_weather", if_exists="replace");
+    [current_df, minutely_df, hourly_df, daily_df] = get_city_weather(cities)
+
+    # Create Tables on DB
+    current_df.sql("current_weather", con=con, if_exists="replace", index=False)
+    minutely_df.to_sql("minutely_weather", con=con, if_exists="replace", index=False)
+    hourly_df.to_sql("hourly_weather", con=con, if_exists="replace", index=False)
+    daily_df.to_sql("daily_weather", con=con, if_exists="replace", index=False)
     
 
+# -------------------  GET CITIES  ------------------------------------------------------------------------------------
+
 def get_cities(con):
-    # All citys with a population > 100.000 
+    # Get all cities from DB
+
+    # LIMIT FOR DEVELOPMENT ----------------<<<<<<<<<
     sql = '''
-    SELECT municipality_country, city_name, city_latitude, city_longitude FROM cities
-    WHERE city_pop > 100000
+    SELECT * FROM cities
     ORDER BY city_pop desc
-    limit 3;
+    limit 2;
     '''
 
     return pd.read_sql(sql, con)
 
+# -------------------  GET CITY WEATHER  ------------------------------------------------------------------------------------
 
 def get_city_weather(cities):
     current_weather_df = pd.DataFrame()
+    minutely_weather_df = pd.DataFrame()
+    hourly_weather_df = pd.DataFrame()
+    daily_weather_df = pd.DataFrame()
+
     for index, city_row in cities.iterrows():
-        API_KEY = "c21a13f270f9dfc33b7894b574d754ad"
-        url = f"https://api.openweathermap.org/data/2.5/onecall?lat={city_row['city_latitude']}&lon={city_row['city_longitude']}&appid={API_KEY}&units=metric"
+        url = f"https://api.openweathermap.org/data/2.5/onecall?lat={city_row['city_latitude']}&lon={city_row['city_longitude']}&appid={OWM_API_KEY}&units=metric"
         try:
-            response = requests.get(url).json()
-            current_city_weather = get_current_city_weather(response["current"], city_row)
-            pd.concat([current_weather_df, current_city_weather])
+            response = requests.get(url).json() 
+            current_weather = get_current_weather(response, city_row)
+            minutely_weather = get_minutely_weather(response, city_row)
+            hourly_weather = get_hourly_weather(response, city_row)
+            daily_weather = get_daily_weather(response, city_row)
+
+            current_weather_df = pd.concat([current_weather_df, current_weather])
+            minutely_weather_df = pd.concat([minutely_weather_df, minutely_weather])
+            hourly_weather_df = pd.concat([hourly_weather_df, hourly_weather])
+            daily_weather_df =pd.concat([daily_weather_df, daily_weather])
                 
         except Exception as e:
             continue
-    return current_weather_df
+    return [current_weather_df, minutely_weather_df, hourly_weather_df, daily_weather_df]
+
+# -------------------  CLEAN CURRENT WEATHER  ------------------------------------------------------------------------------------
 
 def clean_city_weather(df):
     return df
@@ -84,12 +111,47 @@ def send_to_db(df, table_name, if_exists="replace"):
         ALTER TABLE city_weather 
         ADD FOREIGN KEY (municipality_country) REFERENCES cities(municipality_country);
         ''')
-    return df
 
-def get_current_city_weather(current_response, city_row):
-    current_response["weather"] = current_response["weather"][0]
-    city_current_weather = (
-                pd.json_normalize(current_response, sep="_")
+
+# -------------------  GET CURRENT WEATHER  ------------------------------------------------------------------------------------  
+
+
+def get_current_weather(response, city_row):
+    response["current"]["weather"] = response["current"]["weather"][0]
+    current_weather = (
+                pd.json_normalize(response["current"], sep="_")
                 .assign(municipality_country = city_row["municipality_country"])
             ) 
-    return city_current_weather
+    return current_weather
+
+
+# -------------------  GET MINUTELY WEATHER  ------------------------------------------------------------------------------------    
+
+def get_minutely_weather(response, city_row):
+    response["minutely"]["weather"] = response["minutely"]["weather"][0]
+    minutely_weather = (
+                pd.json_normalize(response["minutely"], sep="_")
+                .assign(municipality_country = city_row["municipality_country"])
+            ) 
+    return minutely_weather
+
+# -------------------  GET HOURLY WEATHER  ------------------------------------------------------------------------------------    
+
+def get_hourly_weather(response, city_row):
+    response["hourly"]["weather"] = response["hourly"]["weather"][0]
+    hourly_weather = (
+                pd.json_normalize(response["hourly"], sep="_")
+                .assign(municipality_country = city_row["municipality_country"])
+            ) 
+    return hourly_weather
+
+# -------------------  GET DAILY WEATHER  ------------------------------------------------------------------------------------    
+
+def get_daily_weather(response, city_row):
+    response["daily"]["weather"] = response["daily"]["weather"][0]
+    daily_weather = (
+                pd.json_normalize(response["daily"], sep="_")
+                .assign(municipality_country = city_row["municipality_country"])
+            ) 
+    return daily_weather
+

@@ -1,45 +1,50 @@
-# Data Engineering with Python, AWS and MYSQL
+# Data Engineering with Python, AWS Lambda, AWS Event Bridge and MYSQL
 
 ## Description:
 
-This is an extremely important component of the README. You should describe the main purpose of your project. Answer questions like “why did you build this project?” and “what problem(s) does it solve?”. It also helps to include your motivations for the project and what you learned from it.
+I started this project to gain a better understanding for data pipelines and to get some experience in automating data collection.
+Starting from a JSON file from [Open Weather map](https://openweathermap.org) with information about the cities it covers and a CSV with airport information, a relational database was populated. With AWS Lambdas and AWS Event Bridge, the Open Weather API, as well as the [AeroboxData API](https://www.aerodatabox.com) are used to provide regular weather information, as well as arrivals and departures from German cities. The data is collected in cloud based relational Data Base and all the tables are connected with primary and foreign keys.
+
+![My Database Schema](/assets/Schema.png)
 
 ## Features:
 
-If your project has multiple features, list them here. Don’t be afraid to brag if your project has unique features that make it stand out. You can even add screenshots and gifs to show off the features.
-
-## How to use:
-
-Here, you should write step-by-step instructions on how to install and use your project. Any software or package requirements should also be listed here.
+- Daily weather + forecast information for german cities (current, hourly, daily)
+- daily departures and arrivals for german cities (Free Api is restricted to only a few calls a month)
 
 ## Technologies:
 
 ### Python
 
 - pandas
+  data handling and cleaning with pandas Data Frame
 - sqlalchemy
+  connection with RDS and adjustments on Tables
 - requests
-- os
-- dotenv
+  API Calls
+- os and dotenv
+  loading and using environment variables for api keys and more
 - functools
+  logging tool for data cleaning
 - datetime
+  date operations
 
 ### MYSQL
 
 - via sqlalchemy
 - MYSQL Workbench
+  checking the status of the RDS. Getting Schema. Adjusting tables
 
 ### AWS
 
 - RDS
+  creating cloud based relational Database
 - lambda
+  api calls, creation of tables, sending them to the cloud
 - event bridge
+  automate lamda functions. Set events for API calls
 
 List all the technologies and/or frameworks you used and what purpose they serve in your project.
-
-## Collaborators:
-
-If others have contributed to your project in any way, it is important to give them credit for their work. Write your team members’ or collaborators’ names here along with a link to their GitHub profile.
 
 ## License:
 

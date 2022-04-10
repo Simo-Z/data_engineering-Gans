@@ -16,35 +16,33 @@ Starting from a JSON file from [Open Weather map](https://openweathermap.org) wi
 
 ### Python
 
-- pandas
+- pandas \
   data handling and cleaning with pandas Data Frame
-- sqlalchemy
+- sqlalchemy\
   connection with RDS and adjustments on Tables
-- requests
+- requests\
   API Calls
-- os and dotenv
+- os and dotenv\
   loading and using environment variables for api keys and more
-- functools
+- functools\
   logging tool for data cleaning
-- datetime
+- datetime \
   date operations
 
 ### MYSQL
 
-- via sqlalchemy
-- MYSQL Workbench
+- via sqlalchemy\
+- MYSQL Workbench\
   checking the status of the RDS. Getting Schema. Adjusting tables
 
 ### AWS
 
-- RDS
+- RDS\
   creating cloud based relational Database
-- lambda
+- lambda\
   api calls, creation of tables, sending them to the cloud
-- event bridge
+- event bridge\
   automate lamda functions. Set events for API calls
-
-List all the technologies and/or frameworks you used and what purpose they serve in your project.
 
 ## License:
 

@@ -2,6 +2,8 @@ import requests
 import pandas as pd
 import datetime as dt
 import sqlalchemy
+import os
+from dotenv import load_dotenv, find_dotenv
 
 # GLOBAL Variables
 schema="gans"
@@ -38,7 +40,7 @@ def get_arrivals_df(airports):
         querystring = {"withLeg":"true","direction":"Both","withCancelled":"true","withCodeshared":"true","withCargo":"true","withPrivate":"true","withLocation":"true"}
         headers = {
             "X-RapidAPI-Host": "aerodatabox.p.rapidapi.com",
-            "X-RapidAPI-Key": "c1bc1a1acemsh99ced7306b1d2c9p1c10d7jsn078f60dc1a0e"
+            "X-RapidAPI-Key": os.environ["RAPID_API_KEY"]
         }
         try:
             response = requests.request("GET", url, headers=headers, params=querystring).json()

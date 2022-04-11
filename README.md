@@ -1,5 +1,13 @@
 # Data Engineering with Python, AWS Lambda, AWS Event Bridge and MYSQL
 
+> STILL IN PROGRESS
+
+## Todos
+
+- flight API
+- data Types + keys weather Tables
+- weather api
+
 ## Description:
 
 I started this project to gain a better understanding for data pipelines and to get some experience in automating data collection.
